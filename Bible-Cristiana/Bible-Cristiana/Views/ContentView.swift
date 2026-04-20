@@ -9,16 +9,31 @@ import SwiftUI
 
 struct ContentView: View {
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        NavigationStack { // Usamos NavigationStack que es lo más moderno
+            List {
+                // SECCIÓN DE BIBLIA
+                NavigationLink(destination: BibleReadView()) {
+                    HStack {
+                        Image(systemName: "book.fill")
+                            .foregroundColor(.blue)
+                        Text("Biblia Reina Valera")
+                            .font(.headline)
+                    }
+                    .padding(.vertical, 10)
+                }
+                
+                // SECCIÓN DE DEVOCIONALES
+                NavigationLink(destination: DevotionalsView()) {
+                    HStack {
+                        Image(systemName: "heart.text.square.fill")
+                            .foregroundColor(.red)
+                        Text("Devocionales Diarios")
+                            .font(.headline)
+                    }
+                    .padding(.vertical, 10)
+                }
+            }
+            .navigationTitle("Mi Biblia")
         }
-        .padding()
     }
-}
-
-#Preview {
-    ContentView()
 }
