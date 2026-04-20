@@ -7,25 +7,20 @@
 
 import Foundation
 
-//Representa un versiculo
-struct Verse: Codable, Identifiable {
-    let id: Int //Un numero unico para que swift no se confunda.
-    let bookname: String //Nombre del libro
-    let chapter: Int //Numero de capitulo
-    let number: Int //Numero del versiculo
-    let text: String //El mensaje
-}
+import Foundation
 
-//Representa un capitulo
-struct Chapter: Codable, Identifiable {
-    let id: Int //Numero unico para cada capitulo
-    let number: Int //Numero del capitulo
-    let verses: [Verse] // Esto es un array o lista de versiculos
-}
-
-//Representa un libro
-struct Book: Codable, Identifiable {
-    let id: Int //Numero de cada libro
-    let name: String //Nombre de capitulo
-    let chapters: [Chapter] //Lista de capitulos
+// 1. Definimos la estructura que recibirá los datos de internet.
+// Usamos 'BibleResponse' porque es el nombre que pusimos en el Service.
+struct BibleResponse: Codable {
+    let reference: String       // El nombre del pasaje (ej: Juan 3:16)
+    let text: String            // El contenido del versículo
+    let translationName: String  // El nombre de la versión de la Biblia
+    
+    // 2. CodingKeys: Es el "traductor".
+    // La API nos envía 'translation_name', pero en Swift preferimos 'translationName'.
+    enum CodingKeys: String, CodingKey {
+        case reference
+        case text
+        case translationName = "translation_name"
+    }
 }
