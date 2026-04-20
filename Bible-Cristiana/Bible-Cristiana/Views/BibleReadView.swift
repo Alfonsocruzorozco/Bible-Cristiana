@@ -8,30 +8,25 @@
 import SwiftUI
 
 struct BibleReadView: View {
-    @StateObject private var viewModel = BibleViewModel()
-    @State private var passageToSearch: String = ""
-
     var body: some View {
-        VStack {
-            TextField("Buscar pasaje (ej: John 3:16)", text: $passageToSearch)
-                .textFieldStyle(.roundedBorder)
-                .padding()
-
-            Button("Buscar en Reina Valera") {
-                Task {
-                    await viewModel.getVerse(for: passageToSearch)
+        List {
+            Section(header: Text("Antiguo Testamento")) {
+                ForEach(BibleStructure.antiguoTestamento, id: \.self) { libro in
+                    NavigationLink(destination: BookDetailView(bookName: libro)) {
+                        Label(libro, systemImage: "book.closed")
+                    }
                 }
             }
-            .buttonStyle(.borderedProminent)
-
-            if let verse = viewModel.verse {
-                ScrollView {
-                    Text(verse.text)
-                        .padding()
+            
+            Section(header: Text("Nuevo Testamento")) {
+                ForEach(BibleStructure.nuevoTestamento, id: \.self) { libro in
+                    NavigationLink(destination: BookDetailView(bookName: libro)) {
+                        Label(libro, systemImage: "book.fill")
+                            .foregroundColor(.blue)
+                    }
                 }
             }
-            Spacer()
         }
-        .navigationTitle("Lectura")
+        .navigationTitle("Libros de la Biblia")
     }
 }
