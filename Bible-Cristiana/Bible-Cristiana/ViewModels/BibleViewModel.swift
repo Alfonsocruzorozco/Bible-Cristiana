@@ -8,30 +8,38 @@
 import Foundation
 import SwiftUI
 
+struct VersiculoIndividual: Identifiable {
+    let id: Int
+    let numero: Int
+    let contenido: String
+}
+
 @MainActor
 class BibleViewModel: ObservableObject {
     @Published var verse: BibleResponse?
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var availableChapters: [Int] = []
-    
-    // Mapeo corregido basado estrictamente en tu archivo biblia.json
-    private let mapeoLibros: [String: String] = [
-        "Génesis": "gn", "Éxodo": "ex", "Levítico": "lv", "Números": "nm", "Deuteronomio": "dt",
-        "Josué": "js", "Jueces": "jg", "Rut": "rt", "1 Samuel": "1sa", "2 Samuel": "2sa",
-        "1 Reyes": "1ki", "2 Reyes": "2ki", "1 Crónicas": "1ch", "2 Crónicas": "2ch",
-        "Esdras": "ezr", "Nehemías": "ne", "Ester": "et", "Job": "jb", "Salmos": "ps",
-        "Proverbios": "pr", "Eclesiastés": "ec", "Cantares": "ca", "Isaías": "is",
-        "Jeremías": "jr", "Lamentaciones": "la", "Ezequiel": "ez", "Daniel": "da",
-        "Oseas": "ho", "Joel": "jl", "Amós": "am", "Abdías": "ob", "Jonás": "jn",
-        "Miqueas": "mi", "Nahúm": "na", "Habacuc": "hb", "Sofonías": "ze", "Hageo": "hg",
-        "Zacarías": "zc", "Malaquías": "ml", "Mateo": "mt", "Marcos": "mk", "Lucas": "lk",
-        "Juan": "jn", "Hechos": "ac", "Romanos": "ro", "1 Corintios": "1co", "2 Corintios": "2co",
-        "Gálatas": "ga", "Efesios": "ep", "Filipenses": "ph", "Colosenses": "col",
-        "1 Tesalonicenses": "1th", "2 Tesalonicenses": "2th", "1 Timoteo": "1ti",
-        "2 Timoteo": "2ti", "Tito": "tit", "Filemón": "phm", "Hebreos": "he", "Santiago": "ja",
-        "1 Pedro": "1pe", "2 Pedro": "2pe", "1 Juan": "1jo", "2 Juan": "2jo", "3 Juan": "3jo",
-        "Judas": "jude", "Apocalipsis": "re"
+    @Published var availableVerses: [Int] = []
+    @Published var listaVersiculosProcesada: [VersiculoIndividual] = []
+
+    // Diccionario de posiciones estándar para asegurar el tiro
+    private let ordenLibros: [String: Int] = [
+        "genesis": 0, "exodo": 1, "levitico": 2, "numeros": 3, "deuteronomio": 4,
+        "josue": 5, "jueces": 6, "rut": 7, "1samuel": 8, "2samuel": 9,
+        "1reyes": 10, "2reyes": 11, "1cronicas": 12, "2cronicas": 13,
+        "esdras": 14, "nehemias": 15, "ester": 16, "job": 17, "salmos": 18,
+        "proverbios": 19, "eclesiastes": 20, "cantares": 21, "isaias": 22,
+        "jeremias": 23, "lamentaciones": 24, "ezequiel": 25, "daniel": 26,
+        "oseas": 27, "joel": 28, "amos": 29, "abdias": 30, "jonas": 31,
+        "miqueas": 32, "nahum": 33, "habacuc": 34, "sofonias": 35, "hageo": 36,
+        "zacarias": 37, "malaquias": 38, "mateo": 39, "marcos": 40, "lucas": 41,
+        "juan": 42, "hechos": 43, "romanos": 44, "1corintios": 45, "2corintios": 46,
+        "galatas": 47, "efesios": 48, "filipenses": 49, "colosenses": 50,
+        "1tesalonicenses": 51, "2tesalonicenses": 52, "1timoteo": 53,
+        "2timoteo": 54, "tito": 55, "filemon": 56, "hebreos": 57, "santiago": 58,
+        "1pedro": 59, "2pedro": 60, "1juan": 61, "2juan": 62, "3juan": 63,
+        "judas": 64, "apocalipsis": 65
     ]
 
     func getVerse(for bookName: String, chapter: Int = 1) async {
@@ -39,7 +47,7 @@ class BibleViewModel: ObservableObject {
         self.errorMessage = nil
         
         guard let url = Bundle.main.url(forResource: "biblia", withExtension: "json") else {
-            self.errorMessage = "Error: biblia.json no encontrado"
+            self.errorMessage = "Error: No se encontró el archivo JSON"
             self.isLoading = false
             return
         }
@@ -48,40 +56,38 @@ class BibleViewModel: ObservableObject {
             let data = try Data(contentsOf: url)
             let libros = try JSONDecoder().decode([BibliaArchivo].self, from: data)
             
-            // 1. Intentamos obtener la abreviatura del diccionario
-            let abrevTarget = mapeoLibros[bookName]?.lowercased()
+            let busqueda = bookName.lowercased()
+                .folding(options: .diacriticInsensitive, locale: .current)
+                .replacingOccurrences(of: " ", with: "")
             
-            // 2. Buscamos el libro en el JSON
-            if let libro = libros.first(where: { $0.abbrev.lowercased() == abrevTarget }) {
-                mostrarLibro(libro, bookName: bookName, chapter: chapter)
-            } else {
-                // 3. BUSQUEDA DE EMERGENCIA: Si no coincide el mapa, busca por texto contenido
-                let normalizado = bookName.folding(options: .diacriticInsensitive, locale: .current).lowercased()
-                if let libroEmergencia = libros.first(where: { normalizado.contains($0.abbrev.lowercased()) }) {
-                    mostrarLibro(libroEmergencia, bookName: bookName, chapter: chapter)
-                } else {
-                    self.errorMessage = "No se encontró el libro: \(bookName)"
+            // 1. INTENTO POR POSICIÓN (EL MÁS SEGURO)
+            var libro: BibliaArchivo?
+            if let indice = ordenLibros[busqueda], indice < libros.count {
+                libro = libros[indice]
+            }
+            
+            // 2. RESPALDO POR ABREVIATURA (SI EL ORDEN FALLA)
+            if libro == nil {
+                libro = libros.first { $0.abbrev.lowercased() == String(busqueda.prefix(2)) || busqueda.contains($0.abbrev.lowercased()) }
+            }
+            
+            if let libroFinal = libro {
+                self.availableChapters = Array(1...libroFinal.chapters.count)
+                let idx = chapter - 1
+                if idx >= 0 && idx < libroFinal.chapters.count {
+                    let versos = libroFinal.chapters[idx]
+                    self.availableVerses = Array(1...versos.count)
+                    self.listaVersiculosProcesada = versos.enumerated().map { (i, t) in
+                        VersiculoIndividual(id: i + 1, numero: i + 1, contenido: t)
+                    }
+                    self.verse = BibleResponse(reference: bookName, text: "OK")
                 }
+            } else {
+                self.errorMessage = "No se pudo encontrar el libro: \(bookName)"
             }
         } catch {
-            self.errorMessage = "Error al leer datos"
+            self.errorMessage = "Error al procesar los datos"
         }
         self.isLoading = false
-    }
-
-    private func mostrarLibro(_ libro: BibliaArchivo, bookName: String, chapter: Int) {
-        self.availableChapters = Array(1...libro.chapters.count)
-        let index = chapter - 1
-        if index >= 0 && index < libro.chapters.count {
-            let versiculos = libro.chapters[index]
-            let texto = versiculos.enumerated().map { "\($0 + 1) \($1)" }.joined(separator: " ")
-            
-            // Corrección de ortografía en tiempo real
-            let textoCorregido = texto
-                .replacingOccurrences(of: "crió", with: "creó")
-                .replacingOccurrences(of: "Crió", with: "Creó")
-            
-            self.verse = BibleResponse(reference: "\(bookName) \(chapter)", text: textoCorregido)
-        }
     }
 }
