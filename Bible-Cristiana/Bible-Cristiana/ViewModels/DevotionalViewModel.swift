@@ -7,53 +7,58 @@
 
 import Foundation
 
-// MODELO: Define la estructura exacta del JSON
+// ESTO ES LO QUE FALTA: La definición del modelo debe estar aquí
 struct DevocionalModel: Codable, Identifiable {
     let id: Int
     let fecha: String
     let titulo: String
     let versiculo: String
-    let cita_texto: String // El texto bíblico
-    let contenido: String  // La reflexión
-    let oracion: String    // La oración final
+    let cita_texto: String
+    let contenido: String
+    let oracion: String
 }
 
 class DevotionalViewModel: ObservableObject {
     @Published var devocionalDelDia: DevocionalModel?
-    @Published var isLoading = false
-    
-    init() {
-        cargarDevocional()
+    @Published var todosLosDevocionales: [DevocionalModel] = []
+    @Published var favoritosIds: [Int] {
+        didSet {
+            UserDefaults.standard.set(favoritosIds, forKey: "mis_favoritos_ids")
+        }
     }
     
-    func cargarDevocional() {
-        self.isLoading = true
-        
-        // Buscamos el archivo en el bundle principal
-        guard let url = Bundle.main.url(forResource: "devocionales", withExtension: "json") else {
-            print("Error: No se encontró el archivo devocionales.json")
-            self.isLoading = false
-            return
-        }
+    init() {
+        self.favoritosIds = UserDefaults.standard.array(forKey: "mis_favoritos_ids") as? [Int] ?? []
+        cargarDatos()
+    }
+    
+    func cargarDatos() {
+        guard let url = Bundle.main.url(forResource: "devocionales", withExtension: "json"),
+              let data = try? Data(contentsOf: url) else { return }
         
         do {
-            let data = try Data(contentsOf: url)
-            let todosLosDevocionales = try JSONDecoder().decode([DevocionalModel].self, from: data)
-            
-            // Obtener fecha actual en formato YYYY-MM-DD
-            let formatter = DateFormatter()
-            formatter.dateFormat = "yyyy-MM-dd"
-            let hoyString = formatter.string(from: Date())
-            
+            let decodificados = try JSONDecoder().decode([DevocionalModel].self, from: data)
             DispatchQueue.main.async {
-                // Busca por fecha, si no existe hoy, muestra el primero de la lista
-                self.devocionalDelDia = todosLosDevocionales.first(where: { $0.fecha == hoyString }) ?? todosLosDevocionales.first
-                self.isLoading = false
+                self.todosLosDevocionales = decodificados
+                let formatter = DateFormatter()
+                formatter.dateFormat = "yyyy-MM-dd"
+                let hoyString = formatter.string(from: Date())
+                self.devocionalDelDia = decodificados.first(where: { $0.fecha == hoyString }) ?? decodificados.first
             }
-            
         } catch {
-            print("Error al procesar el JSON: \(error)")
-            self.isLoading = false
+            print("Error: \(error)")
         }
+    }
+    
+    func toggleFavorito(id: Int) {
+        if favoritosIds.contains(id) {
+            favoritosIds.removeAll { $0 == id }
+        } else {
+            favoritosIds.append(id)
+        }
+    }
+    
+    var listaFavoritos: [DevocionalModel] {
+        return todosLosDevocionales.filter { favoritosIds.contains($0.id) }
     }
 }

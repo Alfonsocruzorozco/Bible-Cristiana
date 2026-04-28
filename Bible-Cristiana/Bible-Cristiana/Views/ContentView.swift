@@ -8,66 +8,51 @@
 import SwiftUI
 
 struct ContentView: View {
-    // Colores del gradiente exactos de tu captura
     let fondoGradiente = LinearGradient(
         gradient: Gradient(colors: [
-            Color(red: 255/255, green: 253/255, blue: 216/255), // Amarillo pastel
-            Color(red: 255/255, green: 218/255, blue: 238/255), // Rosa pastel
-            Color(red: 228/255, green: 196/255, blue: 255/255)  // Lila pastel
+            Color(red: 255/255, green: 253/255, blue: 216/255),
+            Color(red: 255/255, green: 218/255, blue: 238/255),
+            Color(red: 228/255, green: 196/255, blue: 255/255)
         ]),
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
-
+    
     var body: some View {
         NavigationStack {
             ZStack {
-                // 1. FONDO
-                fondoGradiente
-                    .ignoresSafeArea()
-
-                // 2. CONTENIDO
+                fondoGradiente.ignoresSafeArea()
+                
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
+                    VStack(spacing: 25) {
+                        Text("Santuario Digital")
+                            .font(.system(size: 38, weight: .bold, design: .serif))
+                            .padding(.top, 40)
                         
-                        Text("Mi Biblia")
-                            .font(.system(size: 36, weight: .bold))
-                            .foregroundColor(.black)
-                            .padding(.horizontal)
-                            .padding(.top, 20)
-
-                        // TARJETA CONTENEDORA BLANCA (Fusión de tus 5 secciones)
-                        VStack(spacing: 0) {
-                            
-                            // 1. BIBLIA (Tu conexión original)
+                        VStack(spacing: 15) {
+                            // 1. BOTÓN BIBLIA
+                            // Nota: En tu panel veo 'BibleReadView'.
+                            // Si ese es el inicio de tu biblia, úsalo aquí:
                             NavigationLink(destination: BibleReadView()) {
-                                MenuRowView(icon: "book.fill", title: "Biblia Reina Valera", iconColor: .blue)
+                                MenuCard(title: "Biblia Reina Valera", icon: "book.fill", color: .brown)
                             }
-                            Divider().padding(.leading, 55)
-
-                            // 2. DEVOCIONALES (Tu conexión original)
-                            NavigationLink(destination: DevotionalsView()) {
-                                MenuRowView(icon: "heart.text.square.fill", title: "Devocionales Diarios", iconColor: .red)
-                            }
-                            Divider().padding(.leading, 55)
-
-                            // 3. CÓMO LEER (Nuevo - Sin destino aún)
-                            MenuRowView(icon: "lightbulb.fill", title: "Como leer la Biblia", iconColor: .yellow)
-                            Divider().padding(.leading, 55)
-
-                            // 4. NOTAS (Nuevo)
-                            MenuRowView(icon: "square.and.pencil", title: "Notas", iconColor: .orange)
-                            Divider().padding(.leading, 55)
-
-                            // 5. FAVORITOS (Nuevo)
-                            MenuRowView(icon: "heart.fill", title: "Favoritos", iconColor: .pink)
                             
+                            // 2. BOTÓN DEVOCIONALES
+                            NavigationLink(destination: DevotionalsView()) {
+                                MenuCard(title: "Devocionales Diarios", icon: "sun.max.fill", color: .orange)
+                            }
+                            
+                            // 3. BOTÓN FAVORITOS
+                            NavigationLink(destination: FavoritesView()) {
+                                MenuCard(title: "Mis Favoritos", icon: "heart.fill", color: .red)
+                            }
+                            
+                            // 4. PRÓXIMAMENTE
+                            NavigationLink(destination: Text("Guía de lectura próximamente")) {
+                                MenuCard(title: "Cómo leer la Biblia", icon: "info.circle.fill", color: .blue)
+                            }
                         }
-                        .background(Color.white)
-                        .cornerRadius(15)
-                        .padding(.horizontal)
-                        .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 5)
-
+                        .padding(.horizontal, 20)
                     }
                 }
             }
@@ -75,32 +60,31 @@ struct ContentView: View {
     }
 }
 
-// COMPONENTE DE FILA (Para mantener el código limpio y profesional)
-struct MenuRowView: View {
-    let icon: String
+// COMPONENTE DE TARJETA (Asegúrate de copiarlo también)
+struct MenuCard: View {
     let title: String
-    let iconColor: Color
-
+    let icon: String
+    let color: Color
+    
     var body: some View {
         HStack {
             Image(systemName: icon)
-                .font(.system(size: 20))
-                .foregroundColor(iconColor)
-                .frame(width: 35, height: 35)
-                .background(iconColor.opacity(0.1))
-                .cornerRadius(8)
+                .font(.title)
+                .foregroundColor(color)
+                .frame(width: 50)
             
             Text(title)
-                .font(.system(size: 18, weight: .medium))
+                .font(.headline)
                 .foregroundColor(.black)
             
             Spacer()
             
             Image(systemName: "chevron.right")
-                .foregroundColor(Color.gray.opacity(0.4))
-                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(.gray)
         }
-        .padding(.vertical, 15)
-        .padding(.horizontal, 15)
+        .padding()
+        .background(Color.white.opacity(0.8))
+        .cornerRadius(20)
+        .shadow(color: .black.opacity(0.05), radius: 10)
     }
 }

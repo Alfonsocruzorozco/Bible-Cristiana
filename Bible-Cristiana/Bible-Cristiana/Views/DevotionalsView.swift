@@ -10,12 +10,11 @@ import SwiftUI
 struct DevotionalsView: View {
     @StateObject private var viewModel = DevotionalViewModel()
     
-    // Gradiente insignia de la App
     let fondoGradiente = LinearGradient(
         gradient: Gradient(colors: [
-            Color(red: 255/255, green: 253/255, blue: 216/255), // Amarillo
-            Color(red: 255/255, green: 218/255, blue: 238/255), // Rosa
-            Color(red: 228/255, green: 196/255, blue: 255/255)  // Lila
+            Color(red: 255/255, green: 253/255, blue: 216/255),
+            Color(red: 255/255, green: 218/255, blue: 238/255),
+            Color(red: 228/255, green: 196/255, blue: 255/255)
         ]),
         startPoint: .topLeading,
         endPoint: .bottomTrailing
@@ -23,110 +22,85 @@ struct DevotionalsView: View {
 
     var body: some View {
         ZStack {
-            // Capa de fondo
-            fondoGradiente
-                .ignoresSafeArea()
+            fondoGradiente.ignoresSafeArea()
 
             ScrollView {
                 if let devocional = viewModel.devocionalDelDia {
                     VStack(spacing: 25) {
                         
-                        // TARJETA DE CRISTAL (Glassmorphism)
-                        VStack(alignment: .leading, spacing: 22) {
+                        // TARJETA PRINCIPAL CON BOTÓN DE FAVORITO
+                        ZStack(alignment: .topTrailing) {
                             
-                            // 1. Fecha
-                            Text(formatearFecha(devocional.fecha))
-                                .font(.caption)
-                                .fontWeight(.bold)
-                                .foregroundColor(.secondary)
+                            VStack(alignment: .leading, spacing: 22) {
+                                Text(formatearFecha(devocional.fecha))
+                                    .font(.caption).fontWeight(.bold).foregroundColor(.secondary)
 
-                            // 2. Título
-                            Text(devocional.titulo)
-                                .font(.system(size: 32, weight: .bold, design: .serif))
-                                .foregroundColor(.black)
+                                Text(devocional.titulo)
+                                    .font(.system(size: 32, weight: .bold, design: .serif))
 
-                            // 3. Bloque de Versículo Estilizado
-                            VStack(alignment: .leading, spacing: 10) {
-                                Text(devocional.cita_texto)
-                                    .font(.system(size: 19, weight: .medium, design: .serif))
-                                    .italic()
-                                    .foregroundColor(.black.opacity(0.8))
+                                VStack(alignment: .leading, spacing: 10) {
+                                    Text(devocional.cita_texto)
+                                        .font(.system(size: 19, weight: .medium, design: .serif)).italic()
+                                    Text(devocional.versiculo)
+                                        .font(.caption).fontWeight(.bold).foregroundColor(.blue)
+                                }
+                                .padding()
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(Color.blue.opacity(0.06))
+                                .cornerRadius(15)
+
+                                Text(devocional.contenido)
+                                    .font(.system(size: 20, design: .serif))
+                                    .lineSpacing(8)
                                 
-                                Text(devocional.versiculo)
-                                    .font(.caption)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.blue)
+                                Divider()
+
+                                VStack(alignment: .leading, spacing: 12) {
+                                    Text("ORACIÓN")
+                                        .font(.caption2).fontWeight(.black).foregroundColor(.secondary)
+                                    Text(devocional.oracion)
+                                        .font(.system(size: 18, design: .serif)).italic().foregroundColor(.secondary)
+                                }
                             }
-                            .padding()
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Color.blue.opacity(0.06))
-                            .cornerRadius(15)
-
-                            // 4. Reflexión principal
-                            Text(devocional.contenido)
-                                .font(.system(size: 20, design: .serif))
-                                .lineSpacing(8)
-                                .foregroundColor(.black)
+                            .padding(30)
                             
-                            Divider()
-                                .padding(.vertical, 10)
-
-                            // 5. Sección de Oración
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text("ORACIÓN")
-                                    .font(.caption2)
-                                    .fontWeight(.black)
-                                    .foregroundColor(.secondary)
-                                
-                                Text(devocional.oracion)
-                                    .font(.system(size: 18, design: .serif))
-                                    .italic()
-                                    .foregroundColor(.secondary)
-                                    .lineSpacing(4)
+                            // BOTÓN DE CORAZÓN (Favoritos)
+                            Button(action: {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                                    viewModel.toggleFavorito(id: devocional.id)
+                                }
+                            }) {
+                                Image(systemName: viewModel.favoritosIds.contains(devocional.id) ? "heart.fill" : "heart")
+                                    .font(.system(size: 26))
+                                    .foregroundColor(viewModel.favoritosIds.contains(devocional.id) ? .red : .gray)
+                                    .padding(25)
                             }
                         }
-                        .padding(30)
                         .background(
                             RoundedRectangle(cornerRadius: 35)
-                                .fill(Color.white.opacity(0.85)) // Efecto traslúcido
-                                .shadow(color: .black.opacity(0.05), radius: 20, x: 0, y: 10)
+                                .fill(Color.white.opacity(0.85))
+                                .shadow(color: .black.opacity(0.05), radius: 20)
                         )
                         .padding(.horizontal, 20)
 
-                        // BOTÓN PARA COMPARTIR
-                        ShareLink(item: "\(devocional.titulo)\n\n\(devocional.cita_texto) (\(devocional.versiculo))\n\n\(devocional.contenido)") {
+                        // BOTÓN COMPARTIR
+                        ShareLink(item: "\(devocional.titulo)\n\n\(devocional.cita_texto) (\(devocional.versiculo))") {
                             Label("Compartir Reflexión", systemImage: "square.and.arrow.up")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                                .padding()
+                                .font(.headline).foregroundColor(.white).padding()
                                 .frame(maxWidth: .infinity)
-                                .background(Color.blue)
-                                .cornerRadius(18)
+                                .background(Color.blue).cornerRadius(18)
                         }
-                        .padding(.horizontal, 45)
-                        .padding(.bottom, 30)
+                        .padding(.horizontal, 45).padding(.bottom, 30)
                     }
                     .padding(.vertical, 20)
-                    
                 } else {
-                    // Pantalla de espera
-                    VStack(spacing: 20) {
-                        ProgressView()
-                            .scaleEffect(1.5)
-                        Text("Preparando tu palabra de hoy...")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, 100)
+                    ProgressView().padding(.top, 100)
                 }
             }
         }
         .navigationTitle("Devocional")
-        .navigationBarTitleDisplayMode(.inline)
     }
-    
-    // Función para dar formato a la fecha en español
+
     func formatearFecha(_ fechaRaw: String) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
