@@ -4,42 +4,48 @@
 //
 //  Created by Alfonso Cruz Orozco on 20/04/26.
 //
-
 import SwiftUI
 
 struct BookDetailView: View {
     let bookName: String
     @StateObject private var viewModel = BibleViewModel()
+    @State private var selectedChapter = 1
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
+        VStack {
+            if !viewModel.availableChapters.isEmpty {
+                Picker("Capítulo", selection: $selectedChapter) {
+                    ForEach(viewModel.availableChapters, id: \.self) { cap in
+                        Text("Capítulo \(cap)").tag(cap)
+                    }
+                }
+                .pickerStyle(.menu)
+                .onChange(of: selectedChapter) { _, newValue in
+                    Task { await viewModel.getVerse(for: bookName, chapter: newValue) }
+                }
+            }
+
+            ScrollView {
                 if viewModel.isLoading {
-                    ProgressView("Cargando...")
-                        .padding(.top, 50)
+                    ProgressView().padding(.top, 40)
                 } else if let verse = viewModel.verse {
                     Text(verse.text)
-                        .font(.system(size: 18, weight: .regular, design: .serif))
-                        .lineSpacing(6)
                         .padding()
+                        .font(.serif(size: 18)) // Asegúrate de tener esta fuente o usa .body
                 } else if let error = viewModel.errorMessage {
-                    // Diseño de error elegante para que Apple no te rechace
-                    VStack(spacing: 15) {
-                        Image(systemName: "wifi.exclamationmark")
-                            .font(.largeTitle)
-                        Text(error)
-                            .multilineTextAlignment(.center)
-                    }
-                    .foregroundColor(.gray)
-                    .padding(.top, 50)
+                    Text(error).foregroundColor(.red).padding()
                 }
             }
         }
         .navigationTitle(bookName)
         .onAppear {
-            Task {
-                await viewModel.getVerse(for: bookName)
-            }
+            Task { await viewModel.getVerse(for: bookName, chapter: 1) }
         }
+    }
+}
+
+extension Font {
+    static func serif(size: CGFloat) -> Font {
+        return .custom("Georgia", size: size)
     }
 }
