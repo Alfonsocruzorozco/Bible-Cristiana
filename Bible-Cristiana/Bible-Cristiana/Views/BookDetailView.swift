@@ -10,25 +10,35 @@ import SwiftUI
 struct BookDetailView: View {
     let bookName: String
     @StateObject private var viewModel = BibleViewModel()
-    
+
     var body: some View {
         ScrollView {
-            if viewModel.isLoading {
-                ProgressView()
-            } else if let verse = viewModel.verse {
-                VStack(alignment: .leading, spacing: 15) {
+            VStack(spacing: 20) {
+                if viewModel.isLoading {
+                    ProgressView("Cargando...")
+                        .padding(.top, 50)
+                } else if let verse = viewModel.verse {
                     Text(verse.text)
-                        .font(.system(.body, design: .serif))
-                        .lineSpacing(10)
+                        .font(.system(size: 18, weight: .regular, design: .serif))
+                        .lineSpacing(6)
+                        .padding()
+                } else if let error = viewModel.errorMessage {
+                    // Diseño de error elegante para que Apple no te rechace
+                    VStack(spacing: 15) {
+                        Image(systemName: "wifi.exclamationmark")
+                            .font(.largeTitle)
+                        Text(error)
+                            .multilineTextAlignment(.center)
+                    }
+                    .foregroundColor(.gray)
+                    .padding(.top, 50)
                 }
-                .padding()
             }
         }
         .navigationTitle(bookName)
         .onAppear {
-            // Por defecto, al entrar cargamos el capítulo 1 de ese libro
             Task {
-                await viewModel.getVerse(for: "\(bookName) 1")
+                await viewModel.getVerse(for: bookName)
             }
         }
     }

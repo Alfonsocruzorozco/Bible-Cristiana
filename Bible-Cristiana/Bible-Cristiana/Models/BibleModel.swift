@@ -7,20 +7,20 @@
 
 import Foundation
 
-import Foundation
+// Este modelo coincide exactamente con tu captura de pantalla
+struct BibliaArchivo: Codable {
+    let verses: [VersiculoCompleto]
+}
 
-// 1. Definimos la estructura que recibirá los datos de internet.
-// Usamos 'BibleResponse' porque es el nombre que pusimos en el Service.
+struct VersiculoCompleto: Codable {
+    let book_name: String
+    let chapter: Int
+    let verse: Int
+    let text: String
+}
+
+// Lo que la vista sigue usando para no romperse
 struct BibleResponse: Codable {
-    let reference: String       // El nombre del pasaje (ej: Juan 3:16)
-    let text: String            // El contenido del versículo
-    let translationName: String  // El nombre de la versión de la Biblia
-    
-    // 2. CodingKeys: Es el "traductor".
-    // La API nos envía 'translation_name', pero en Swift preferimos 'translationName'.
-    enum CodingKeys: String, CodingKey {
-        case reference
-        case text
-        case translationName = "translation_name"
-    }
+    let reference: String
+    let text: String
 }
