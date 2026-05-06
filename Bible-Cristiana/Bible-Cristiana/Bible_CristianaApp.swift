@@ -9,9 +9,12 @@ import SwiftUI
 
 @main
 struct Bible_CristianaApp: App {
+    @StateObject var viewModel = DevotionalViewModel()
+
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(viewModel)
         }
     }
 }

@@ -6,59 +6,82 @@
 //
 
 import Foundation
-
-// ESTO ES LO QUE FALTA: La definición del modelo debe estar aquí
-struct DevocionalModel: Codable, Identifiable {
-    let id: Int
-    let fecha: String
-    let titulo: String
-    let versiculo: String
-    let cita_texto: String
-    let contenido: String
-    let oracion: String
-}
+import SwiftUI
 
 class DevotionalViewModel: ObservableObject {
-    @Published var devocionalDelDia: DevocionalModel?
-    @Published var todosLosDevocionales: [DevocionalModel] = []
-    @Published var favoritosIds: [Int] {
-        didSet {
-            UserDefaults.standard.set(favoritosIds, forKey: "mis_favoritos_ids")
-        }
+    @Published var listaFavoritos: [Devocional] = [] {
+        didSet { guardarFavoritos() }
     }
     
+    @Published var devocionalDelDia: Devocional = Devocional(
+        titulo: "Caminar en Confianza",
+        versiculo: "Salmos 23:1",
+        contenido: "Jehová es mi pastor; nada me faltará. En lugares de delicados pastos me hará descansar; junto a aguas de reposo me pastoreará.",
+        fecha: Date(),
+        cita_texto: "El Señor es quien me guía y me provee de todo lo necesario.",
+        esFavorito: false
+    )
+    
+    @Published var devocionalActualEmocion: Devocional = Devocional(
+        titulo: "Encuentra Paz",
+        versiculo: "Juan 14:27",
+        contenido: "La paz os dejo, mi paz os doy; yo no os la doy como el mundo la da.",
+        fecha: Date(),
+        cita_texto: "No se turbe vuestro corazón.",
+        esFavorito: false
+    )
+    
+    private let llaveFavoritos = "lista_favoritos_key"
+
     init() {
-        self.favoritosIds = UserDefaults.standard.array(forKey: "mis_favoritos_ids") as? [Int] ?? []
-        cargarDatos()
+        cargarFavoritos()
+        actualizarEstados()
     }
     
-    func cargarDatos() {
-        guard let url = Bundle.main.url(forResource: "devocionales", withExtension: "json"),
-              let data = try? Data(contentsOf: url) else { return }
-        
-        do {
-            let decodificados = try JSONDecoder().decode([DevocionalModel].self, from: data)
-            DispatchQueue.main.async {
-                self.todosLosDevocionales = decodificados
-                let formatter = DateFormatter()
-                formatter.dateFormat = "yyyy-MM-dd"
-                let hoyString = formatter.string(from: Date())
-                self.devocionalDelDia = decodificados.first(where: { $0.fecha == hoyString }) ?? decodificados.first
-            }
-        } catch {
-            print("Error: \(error)")
+    func guardarFavoritos() {
+        if let encoded = try? JSONEncoder().encode(listaFavoritos) {
+            UserDefaults.standard.set(encoded, forKey: llaveFavoritos)
         }
     }
     
-    func toggleFavorito(id: Int) {
-        if favoritosIds.contains(id) {
-            favoritosIds.removeAll { $0 == id }
+    func cargarFavoritos() {
+        if let data = UserDefaults.standard.data(forKey: llaveFavoritos),
+           let decoded = try? JSONDecoder().decode([Devocional].self, from: data) {
+            self.listaFavoritos = decoded
+        }
+    }
+
+    func toggleFavorito(para devocional: Devocional) {
+        if let index = listaFavoritos.firstIndex(where: { $0.titulo == devocional.titulo }) {
+            listaFavoritos.remove(at: index)
         } else {
-            favoritosIds.append(id)
+            var nuevoFav = devocional
+            nuevoFav.esFavorito = true
+            listaFavoritos.append(nuevoFav)
         }
+        actualizarEstados()
+    }
+
+    func esFavorito(devocional: Devocional) -> Bool {
+        listaFavoritos.contains(where: { $0.titulo == devocional.titulo })
+    }
+
+    func actualizarEstados() {
+        devocionalDelDia.esFavorito = esFavorito(devocional: devocionalDelDia)
+        devocionalActualEmocion.esFavorito = esFavorito(devocional: devocionalActualEmocion)
     }
     
-    var listaFavoritos: [DevocionalModel] {
-        return todosLosDevocionales.filter { favoritosIds.contains($0.id) }
+    func eliminarDeFavoritos(at offsets: IndexSet) {
+        listaFavoritos.remove(atOffsets: offsets)
+        actualizarEstados()
+    }
+
+    func generarNuevoDevocionalParaEmocion(emocion: String) {
+        let nuevos = [
+            Devocional(titulo: "Fortaleza en \(emocion)", versiculo: "Isaías 41:10", contenido: "No temas, porque yo estoy contigo; no desmayes, porque yo soy tu Dios...", fecha: Date(), cita_texto: "Yo soy tu Dios que te esfuerzo.", esFavorito: false),
+            Devocional(titulo: "Victoria sobre \(emocion)", versiculo: "Romanos 8:37", contenido: "Antes, en todas estas cosas somos más que vencedores por medio de aquel que nos amó.", fecha: Date(), cita_texto: "Somos más que vencedores.", esFavorito: false)
+        ]
+        self.devocionalActualEmocion = nuevos.randomElement() ?? nuevos[0]
+        actualizarEstados()
     }
 }
