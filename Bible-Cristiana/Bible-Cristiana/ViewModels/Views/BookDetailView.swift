@@ -12,20 +12,38 @@ struct BookDetailView: View {
     @State private var selectedChapter = 1
     @State private var selectedVerse = 1
     
-    // El gradiente exacto de tu interfaz principal
-    let fondoGradiente = LinearGradient(
-        gradient: Gradient(colors: [
-            Color(red: 255/255, green: 253/255, blue: 216/255), // Amarillo
-            Color(red: 255/255, green: 218/255, blue: 238/255), // Rosa
-            Color(red: 228/255, green: 196/255, blue: 255/255)  // Lila
-        ]),
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
+    // --- NUEVO ---
+    // Leemos el estado global del tema
+    @AppStorage("isDarkMode") private var isDarkMode = false
+    
+    // --- MODIFICADO ---
+    // Propiedad calculada dinámica para cambiar el fondo según el modo
+    var fondoGradiente: LinearGradient {
+        if isDarkMode {
+            return LinearGradient(
+                gradient: Gradient(colors: [
+                    Color(red: 25/255, green: 25/255, blue: 35/255), // Azul muy oscuro
+                    Color(red: 35/255, green: 25/255, blue: 45/255)  // Morado muy oscuro
+                ]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        } else {
+            return LinearGradient(
+                gradient: Gradient(colors: [
+                    Color(red: 255/255, green: 253/255, blue: 216/255), // Amarillo
+                    Color(red: 255/255, green: 218/255, blue: 238/255), // Rosa
+                    Color(red: 228/255, green: 196/255, blue: 255/255)  // Lila
+                ]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        }
+    }
     
     var body: some View {
         ZStack {
-            // 1. CAPA DE FONDO: Ocupa toda la pantalla
+            // 1. CAPA DE FONDO: Ocupa toda la pantalla de manera dinámica
             fondoGradiente
                 .ignoresSafeArea()
             
@@ -47,12 +65,12 @@ struct BookDetailView: View {
                 }
                 .padding(.vertical, 8)
                 .padding(.horizontal, 20)
-                .background(.ultraThinMaterial) // Efecto difuminado elegante
+                .background(.ultraThinMaterial) // Apple lo oscurece o aclara de forma nativa impecable
                 .cornerRadius(20)
                 .padding(.top, 10)
                 .padding(.bottom, 15)
 
-                // 3. ÁREA DE LECTURA (Scroll con fondo blanco translúcido)
+                // 3. ÁREA DE LECTURA (Scroll con fondo dinámico translúcido)
                 ScrollViewReader { proxy in
                     ScrollView {
                         if viewModel.isLoading {
@@ -64,10 +82,13 @@ struct BookDetailView: View {
                                 ForEach(viewModel.listaVersiculosProcesada) { v in
                                     (Text("\(v.numero) ")
                                         .font(.system(size: 14, weight: .bold, design: .serif))
-                                        .foregroundColor(.red) +
+                                        // Rojo ligeramente más brillante en modo oscuro para legibilidad
+                                        .foregroundColor(isDarkMode ? Color(red: 255/255, green: 100/255, blue: 100/255) : .red) +
                                      Text(v.contenido))
                                         .font(.system(size: 20, design: .serif))
-                                        .foregroundColor(.black) // Asegura legibilidad
+                                        // --- MODIFICADO ---
+                                        // .primary para cambiar dinámicamente entre negro y blanco puro
+                                        .foregroundColor(.primary)
                                         .id(v.id)
                                 }
                             }
@@ -75,13 +96,18 @@ struct BookDetailView: View {
                             .lineSpacing(10)
                         }
                     }
-                    // ESTA ES LA "HOJA" DE CRISTAL
+                    // --- MODIFICADO ---
+                    // ESTA ES LA "HOJA" DE CRISTAL ADAPTABLE
                     .background(
                         RoundedRectangle(cornerRadius: 25)
-                            .fill(Color.white.opacity(0.85)) // Deja pasar el color del fondo
-                            .shadow(color: .black.opacity(0.05), radius: 10)
+                            .fill(
+                                isDarkMode
+                                    ? Color(white: 0.15).opacity(0.85) // Fondo gris oscuro suave
+                                    : Color.white.opacity(0.85)        // Fondo blanco original
+                            )
+                            .shadow(color: isDarkMode ? .white.opacity(0.02) : .black.opacity(0.05), radius: 10)
                     )
-                    .padding(.horizontal, 15) // Margen para que se vea el fondo a los lados
+                    .padding(.horizontal, 15)
                     .padding(.bottom, 10)
                     .onChange(of: selectedVerse) { _, newValue in
                         withAnimation { proxy.scrollTo(newValue, anchor: .top) }

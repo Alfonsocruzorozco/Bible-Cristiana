@@ -8,61 +8,96 @@
 import SwiftUI
 
 struct SearchGuideView: View {
-    let fondoGradiente = LinearGradient(
-        gradient: Gradient(colors: [
-            Color(red: 255/255, green: 253/255, blue: 216/255),
-            Color(red: 255/255, green: 218/255, blue: 238/255),
-            Color(red: 228/255, green: 196/255, blue: 255/255)
-        ]),
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
+    // --- NUEVO ---
+    // Leemos el estado global del tema para sincronizar los fondos
+    @AppStorage("isDarkMode") private var isDarkMode = false
+
+    // --- MODIFICADO ---
+    // Propiedad calculada dinámica para cambiar el fondo según el modo
+    var fondoGradiente: LinearGradient {
+        if isDarkMode {
+            return LinearGradient(
+                gradient: Gradient(colors: [
+                    Color(red: 25/255, green: 25/255, blue: 35/255), // Azul muy oscuro
+                    Color(red: 35/255, green: 25/255, blue: 45/255)  // Morado muy oscuro
+                ]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        } else {
+            return LinearGradient(
+                gradient: Gradient(colors: [
+                    Color(red: 255/255, green: 253/255, blue: 216/255),
+                    Color(red: 255/255, green: 218/255, blue: 238/255),
+                    Color(red: 228/255, green: 196/255, blue: 255/255)
+                ]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        }
+    }
 
     var body: some View {
         ZStack {
+            // Fondo dinámico adaptado
             fondoGradiente.ignoresSafeArea()
             
             ScrollView {
                 VStack(spacing: 30) {
+                    // Cabecera con Icono y Título
                     VStack(spacing: 15) {
                         Image(systemName: "magnifyingglass.circle.fill")
                             .font(.system(size: 70))
                             .foregroundColor(.orange)
-                            .shadow(color: .orange.opacity(0.3), radius: 10)
+                            .shadow(color: .orange.opacity(isDarkMode ? 0.1 : 0.3), radius: 10)
                         
                         Text("¿Cómo buscar una cita?")
                             .font(.system(size: 28, weight: .bold, design: .rounded))
+                            .foregroundColor(.primary) // --- MODIFICADO ---
                             .multilineTextAlignment(.center)
                     }
                     .padding(.top, 20)
 
+                    // CONTENEDOR DEL EJEMPLO VISUAL (Juan 3:16)
                     VStack(spacing: 20) {
                         Text("Ejemplo:")
-                            .font(.caption.smallCaps()) // Corrección aquí
+                            .font(.caption.smallCaps())
                             .foregroundColor(.secondary)
 
                         HStack(spacing: 10) {
                             SearchPartTag(text: "Juan", label: "Libro", color: .blue)
                             SearchPartTag(text: "3", label: "Capítulo", color: .orange)
+                            
                             Text(":")
                                 .font(.largeTitle)
                                 .fontWeight(.bold)
+                                .foregroundColor(.primary) // --- MODIFICADO ---
+                            
                             SearchPartTag(text: "16", label: "Versículo", color: .green)
                         }
                         .padding()
-                        .background(Color.white.opacity(0.6))
+                        // --- MODIFICADO ---
+                        // Fondo del ejemplo adaptable
+                        .background(isDarkMode ? Color(white: 0.15).opacity(0.6) : Color.white.opacity(0.6))
                         .cornerRadius(25)
                     }
 
+                    // CAJA DESCRIPTIVA DE PASOS
                     VStack(alignment: .leading, spacing: 20) {
                         InfoRow(icon: "book.closed.fill", color: .blue, title: "El Libro", desc: "Es el nombre de la sección (ej. Juan, Salmos, Génesis).")
                         InfoRow(icon: "number.circle.fill", color: .orange, title: "El Capítulo", desc: "Es el número grande que aparece al inicio de las páginas.")
                         InfoRow(icon: "tag.fill", color: .green, title: "El Versículo", desc: "Son los números pequeños dentro de cada párrafo.")
                     }
                     .padding()
-                    .background(RoundedRectangle(cornerRadius: 30).fill(.white.opacity(0.5)))
+                    // --- MODIFICADO ---
+                    // Tarjeta contenedora inferior adaptable
+                    .background(
+                        RoundedRectangle(cornerRadius: 30)
+                            .fill(isDarkMode ? Color(white: 0.15).opacity(0.6) : Color.white.opacity(0.5))
+                    )
                     .padding(.horizontal)
 
+                    // TIP FINAL
                     HStack {
                         Image(systemName: "lightbulb.fill")
                             .foregroundColor(.yellow)
@@ -85,20 +120,24 @@ struct SearchPartTag: View {
     let label: String
     let color: Color
     
+    // --- NUEVO ---
+    @AppStorage("isDarkMode") private var isDarkMode = false
+    
     var body: some View {
         VStack {
             Text(text)
                 .font(.system(size: 24, weight: .bold, design: .serif))
-                .foregroundColor(.white)
+                .foregroundColor(.white) // Se mantiene blanco por contraste con su bloque de color activo
                 .padding(.horizontal, 15)
                 .padding(.vertical, 10)
                 .background(color)
                 .cornerRadius(12)
             
             Text(label)
-                .font(.caption2.smallCaps()) // Corrección definitiva aquí
+                .font(.caption2.smallCaps())
                 .fontWeight(.bold)
-                .foregroundColor(color)
+                // En modo oscuro le damos un poco más de luminosidad a las etiquetas inferiores
+                .foregroundColor(isDarkMode ? color.opacity(0.9) : color)
         }
     }
 }
@@ -120,6 +159,7 @@ struct InfoRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.headline)
+                    .foregroundColor(.primary) // --- MODIFICADO ---
                 Text(desc)
                     .font(.subheadline)
                     .foregroundColor(.secondary)

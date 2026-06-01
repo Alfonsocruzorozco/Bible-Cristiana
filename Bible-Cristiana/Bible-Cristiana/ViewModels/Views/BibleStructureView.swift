@@ -8,18 +8,38 @@
 import SwiftUI
 
 struct BibleStructureView: View {
-    let fondoGradiente = LinearGradient(
-        gradient: Gradient(colors: [
-            Color(red: 255/255, green: 253/255, blue: 216/255),
-            Color(red: 255/255, green: 218/255, blue: 238/255),
-            Color(red: 228/255, green: 196/255, blue: 255/255)
-        ]),
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
+    // --- NUEVO ---
+    // Leemos el estado global del tema
+    @AppStorage("isDarkMode") private var isDarkMode = false
+
+    // --- MODIFICADO ---
+    // Propiedad calculada dinámica para cambiar el fondo según el modo
+    var fondoGradiente: LinearGradient {
+        if isDarkMode {
+            return LinearGradient(
+                gradient: Gradient(colors: [
+                    Color(red: 25/255, green: 25/255, blue: 35/255), // Azul muy oscuro
+                    Color(red: 35/255, green: 25/255, blue: 45/255)  // Morado muy oscuro
+                ]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        } else {
+            return LinearGradient(
+                gradient: Gradient(colors: [
+                    Color(red: 255/255, green: 253/255, blue: 216/255),
+                    Color(red: 255/255, green: 218/255, blue: 238/255),
+                    Color(red: 228/255, green: 196/255, blue: 255/255)
+                ]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        }
+    }
 
     var body: some View {
         ZStack {
+            // Fondo adaptado
             fondoGradiente.ignoresSafeArea()
             
             ScrollView {
@@ -47,6 +67,9 @@ struct BibleStructureView: View {
                     VStack(alignment: .leading, spacing: 15) {
                         Text("Diferencias Principales")
                             .font(.headline)
+                            // --- MODIFICADO ---
+                            // Asegura contraste correcto en el título de la sección
+                            .foregroundColor(.primary)
                             .padding(.horizontal)
                         
                         HStack(spacing: 12) {
@@ -67,21 +90,35 @@ struct BibleStructureView: View {
                         
                         HStack {
                             VStack {
-                                Text("39").font(.title.bold())
-                                Text("Libros AT").font(.caption)
+                                Text("39")
+                                    .font(.title.bold())
+                                    .foregroundColor(.primary) // --- MODIFICADO ---
+                                Text("Libros AT")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary) // --- MODIFICADO ---
                             }
                             .frame(maxWidth: .infinity)
                             
                             Divider().frame(height: 40)
                             
                             VStack {
-                                Text("27").font(.title.bold())
-                                Text("Libros NT").font(.caption)
+                                Text("27")
+                                    .font(.title.bold())
+                                    .foregroundColor(.primary) // --- MODIFICADO ---
+                                Text("Libros NT")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary) // --- MODIFICADO ---
                             }
                             .frame(maxWidth: .infinity)
                         }
                         .padding()
-                        .background(Color.white.opacity(0.5))
+                        // --- MODIFICADO ---
+                        // Fondo dinámico translúcido para la caja de distribución
+                        .background(
+                            isDarkMode
+                                ? Color(white: 0.2).opacity(0.6)
+                                : Color.white.opacity(0.5)
+                        )
                         .cornerRadius(20)
                         .padding(.horizontal)
                     }
@@ -92,9 +129,9 @@ struct BibleStructureView: View {
         .navigationTitle("Estructura")
         .navigationBarTitleDisplayMode(.inline)
     }
-} // <--- AQUÍ TERMINA LA ESTRUCTURA PRINCIPAL
+}
 
-// --- LOS COMPONENTE SE DEFINEN AFUERA PARA QUE ESTÉN EN EL "SCOPE" ---
+// --- SUBVISTAS MODULARES CORREGIDAS ---
 
 struct ExplanationCard: View {
     let title: String
@@ -103,6 +140,9 @@ struct ExplanationCard: View {
     let icon: String
     let color: Color
     
+    // --- NUEVO ---
+    @AppStorage("isDarkMode") private var isDarkMode = false
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -110,12 +150,14 @@ struct ExplanationCard: View {
                     .font(.title)
                     .foregroundColor(color)
                     .padding(10)
-                    .background(color.opacity(0.1))
+                    // Opacidad adaptada para que no se pierda en fondos oscuros
+                    .background(color.opacity(isDarkMode ? 0.25 : 0.1))
                     .cornerRadius(10)
                 
                 VStack(alignment: .leading) {
                     Text(title)
                         .font(.title3.bold())
+                        .foregroundColor(.primary) // --- MODIFICADO ---
                     Text(subtitle)
                         .font(.caption)
                         .foregroundColor(color)
@@ -125,11 +167,17 @@ struct ExplanationCard: View {
             
             Text(description)
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundColor(.secondary) // Cambia nativamente
                 .lineSpacing(4)
         }
         .padding(20)
-        .background(Color.white.opacity(0.8))
+        // --- MODIFICADO ---
+        // Fondo adaptable para las tarjetas principales de explicación
+        .background(
+            isDarkMode
+                ? Color(white: 0.15).opacity(0.8)
+                : Color.white.opacity(0.8)
+        )
         .cornerRadius(25)
         .padding(.horizontal)
     }
@@ -141,6 +189,9 @@ struct DifferenceBox: View {
     let subtext: String
     let color: Color
     
+    // --- NUEVO ---
+    @AppStorage("isDarkMode") private var isDarkMode = false
+    
     var body: some View {
         VStack {
             Text(title)
@@ -148,6 +199,7 @@ struct DifferenceBox: View {
                 .foregroundColor(color)
             Text(text)
                 .font(.headline)
+                .foregroundColor(.primary) // --- MODIFICADO ---
             Text(subtext)
                 .font(.system(size: 10))
                 .foregroundColor(.secondary)
@@ -155,11 +207,13 @@ struct DifferenceBox: View {
         }
         .frame(maxWidth: .infinity)
         .padding()
-        .background(color.opacity(0.05))
+        // --- MODIFICADO ---
+        // Ajuste de fondo para los pequeños bloques comparativos
+        .background(color.opacity(isDarkMode ? 0.15 : 0.05))
         .cornerRadius(15)
         .overlay(
             RoundedRectangle(cornerRadius: 15)
-                .stroke(color.opacity(0.2), lineWidth: 1)
+                .stroke(color.opacity(isDarkMode ? 0.4 : 0.2), lineWidth: 1)
         )
     }
 }

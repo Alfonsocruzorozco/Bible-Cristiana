@@ -8,22 +8,39 @@
 import SwiftUI
 
 struct HowToReadView: View {
+    // --- NUEVO ---
+    @AppStorage("isDarkMode") private var isDarkMode = false
+    
     // Configuración de la cuadrícula: 2 columnas con espacio de 20 puntos
     let columns = [
         GridItem(.flexible(), spacing: 20),
         GridItem(.flexible(), spacing: 20)
     ]
     
-    // Fondo constante para mantener la identidad visual de Santuario Digital
-    let fondoGradiente = LinearGradient(
-        gradient: Gradient(colors: [
-            Color(red: 255/255, green: 253/255, blue: 216/255),
-            Color(red: 255/255, green: 218/255, blue: 238/255),
-            Color(red: 228/255, green: 196/255, blue: 255/255)
-        ]),
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
+    // --- MODIFICADO ---
+    // Ahora es una propiedad calculada que cambia según el tema.
+    var fondoGradiente: LinearGradient {
+        if isDarkMode {
+            return LinearGradient(
+                gradient: Gradient(colors: [
+                    Color(red: 25/255, green: 25/255, blue: 35/255), // Azul muy oscuro
+                    Color(red: 35/255, green: 25/255, blue: 45/255)  // Morado muy oscuro
+                ]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        } else {
+            return LinearGradient(
+                gradient: Gradient(colors: [
+                    Color(red: 255/255, green: 253/255, blue: 216/255),
+                    Color(red: 255/255, green: 218/255, blue: 238/255),
+                    Color(red: 228/255, green: 196/255, blue: 255/255)
+                ]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        }
+    }
 
     var body: some View {
         ZStack {
@@ -36,6 +53,8 @@ struct HowToReadView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Cómo leer la Biblia")
                             .font(.system(size: 34, weight: .bold, design: .serif))
+                            .foregroundColor(.primary) // --- MODIFICADO ---
+                        
                         Text("Sigue estos pasos para profundizar en la Palabra de Dios.")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
@@ -70,7 +89,7 @@ struct HowToReadView: View {
                                       color: .orange)
                         }
                         
-                        // 4. ¿Qué necesitas hoy? (Conexión al menú emocional profesional)
+                        // 4. ¿Qué necesitas hoy?
                         NavigationLink(destination: DailyNeedsView()) {
                             GuideCard(title: "¿Qué necesitas?",
                                       subtitle: "Promesas hoy",
@@ -108,6 +127,9 @@ struct GuideCard: View {
     let icon: String
     let color: Color
     
+    // --- NUEVO ---
+    @AppStorage("isDarkMode") private var isDarkMode = false
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
             // Icono con SF Symbol
@@ -118,7 +140,9 @@ struct GuideCard: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.system(.headline, design: .rounded))
-                    .foregroundColor(.black)
+                    // --- MODIFICADO ---
+                    // .primary cambia automáticamente para legibilidad total
+                    .foregroundColor(.primary)
                     .multilineTextAlignment(.leading)
                 
                 Text(subtitle)
@@ -134,19 +158,22 @@ struct GuideCard: View {
                 Spacer()
                 Image(systemName: "chevron.right.circle.fill")
                     .font(.title3)
-                    .foregroundColor(color.opacity(0.4))
+                    .foregroundColor(color.opacity(isDarkMode ? 0.6 : 0.4))
             }
         }
         .padding(20)
         .frame(height: 175)
         // Fondo con efecto ultraThinMaterial para el look Glassmorphism
         .background(.ultraThinMaterial)
-        .background(Color.white.opacity(0.4))
+        // --- MODIFICADO ---
+        // Segunda capa de color adaptada para no saturar de luz blanca el modo oscuro
+        .background(isDarkMode ? Color.black.opacity(0.2) : Color.white.opacity(0.4))
         .cornerRadius(25)
         .overlay(
             RoundedRectangle(cornerRadius: 25)
-                .stroke(Color.white.opacity(0.5), lineWidth: 1)
+                .stroke(isDarkMode ? Color.white.opacity(0.1) : Color.white.opacity(0.5), lineWidth: 1)
         )
-        .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 5)
+        // Sombras adaptadas dinámicas
+        .shadow(color: isDarkMode ? .clear : .black.opacity(0.05), radius: 10, x: 0, y: 5)
     }
 }
